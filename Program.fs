@@ -4,70 +4,72 @@ open System.Linq
 // Define a function to construct a message to print
 let from whom = sprintf "from %s" whom
 
-type Observation =
-    | Partial of test_level: int
-    | Complete of test_level: int * test_value: float
+//let inline (+) (a: 'a option) (b: 'a option) : 'a option =
+//    match a, b with
+//    | Some x, Some y -> Some (x + y)
+//    | Some x, _ -> Some (x)
+//    | _, Some y -> Some (y)
+//    | _ -> None
 
-type TreeNode =
-    { N: int
-      Reward: float
-      Data: Observation list }
+let floatAdd a b =
+    match a, b with
+    | Some x, Some y -> Some (x + y)
+    | Some x, _ -> Some (x)
+    | _, Some y -> Some (y)
+    | _ -> None
+
+type Observation =
+    { test_level: int
+      test_value: float option }
+
+type TreeNode = { N: int; Reward: float option }
 
 type Tree =
-    | Node of TreeNode
-    | Branch of Tree * Tree
+    | Node of data: Observation
+    | Branch of data: TreeNode * left: Tree * right: Tree
+    member this.N() =
+        match this with
+        | Node x -> 1
+        | Branch (d, l, r) -> l.N() + r.N()
 
-let real_data =
-    [ Complete(1, 1)
-      Complete(2, 0)
-      Complete(4, 1)
-      Complete(5, 0) ]
+    member this.Reward() =
+        match this with
+        | Node x -> x.test_value
+        | Branch (d, l, r) -> floatAdd (l.Reward()) (r.Reward())
+
+let real_data: Observation list =
+    [   { test_level = 1;
+        test_value = Some 1.0 }
+        { test_level = 2;
+        test_value = Some 0.0 }
+        { test_level = 4;
+        test_value = Some 1.0 }
+        { test_level = 5;
+        test_value = Some 0.0 } ]
 
 let rec TreeBuilder data_seq =
     let splitObservations observations =
-        let sorted =
-            observations
-            |> List.sortBy (function
-                | Partial level -> level
-                | Complete (level, _) -> level)
-
-        let medianIndex = List.length sorted / 2
-
-        let medianValue =
-            sorted
-            |> List.item medianIndex
-            |> (function
-            | Partial level -> level
-            | Complete (level, _) -> level)
-
-        let left, right = List.take medianIndex sorted, List.skip medianIndex sorted
-        left, right
+        let sorted = List.sortBy (fun o -> o.test_level) observations
+        let count = List.length sorted
+        let midpoint = count / 2
+        let firstHalf = List.take midpoint sorted
+        let secondHalf = List.skip midpoint sorted
+        firstHalf, secondHalf
 
     let retval =
-        if Seq.length data_seq <= 3 then
-            let obs_count =
-                data_seq
-                |> Seq.map (fun obs ->
-                    match obs with
-                    | Partial test_level -> 0
-                    | Complete (test_level, _) -> 1)
-                |> Seq.sum
-
-            let obs_reward =
-                data_seq
-                |> Seq.map (fun obs ->
-                    match obs with
-                    | Partial test_value -> 0.0
-                    | Complete (_, test_value) -> test_value)
-                |> Seq.sum
-
-            Node(
-                { N = obs_count
-                  Reward = obs_reward
-                  Data = data_seq }
-            )
+        if Seq.length data_seq = 1 then
+            let obs = Node(Seq.head data_seq)
+            obs
         else
             let left, right = splitObservations data_seq
+
+            let left_tree: Tree = TreeBuilder left
+            let right_tree: Tree = TreeBuilder right
+
+            let left_node =
+                { N = left_tree.N() + right_tree.N()
+                  Reward = floatAdd (left_tree.Reward()) (right_tree.Reward()) }
+
             Branch(TreeBuilder left, TreeBuilder right)
 
     retval

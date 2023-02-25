@@ -1,5 +1,6 @@
 ﻿open System.Data
 open System.Linq
+open System
 
 // Define a function to construct a message to print
 let from whom = sprintf "from %s" whom
@@ -15,6 +16,11 @@ let optionDiv a b =
     match a with
     | Some x -> Some(x / float b)
     | _ -> None
+
+type NewObservation =
+    { test_class: string 
+      test_level: int
+      test_value: float option }
 
 type Observation =
     { test_level: int
@@ -54,6 +60,30 @@ let real_data: Observation list =
         test_value = Some 0.0 }
       { test_level = 5
         test_value = Some 0.0 } ]
+
+let InitBuilder () =
+    let rand = Random()
+    
+    let randomTestValue () = 
+        Some(rand.NextDouble())
+    
+    let randomTestClass () =
+        match rand.Next(1, 5) with
+        | 1 -> "Blue"
+        | 2 -> "Green"
+        | 3 -> "Purple"
+        | _ -> "Gold"
+    
+    let randomNewObservation dummy =
+        {
+            test_class = randomTestClass()
+            test_level = rand.Next(1, 51)
+            test_value = randomTestValue()
+        }
+    
+    let observations: seq<NewObservation> = Seq.init 10 randomNewObservation
+
+    observations
 
 let rec TreeBuilder data_seq =
     let splitObservations observations =
@@ -155,7 +185,10 @@ let main argv =
 
     let NextExperiment = PickNode data_tree
 
-    printfn "data: %A" data_tree
-    printfn "next: %A" NextExperiment
+    let init_seq = InitBuilder() |> Seq.toList
+
+    printfn "next: %A" init_seq
+    // printfn "data: %A" data_tree
+    // printfn "next: %A" NextExperiment
 
     0 // return an integer exit code

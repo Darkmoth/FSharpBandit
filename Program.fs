@@ -18,7 +18,7 @@ let optionDiv a b =
     | _ -> None
 
 type NewObservation =
-    { test_class: string 
+    { test_class: string
       test_level: int
       test_value: float option }
 
@@ -63,25 +63,22 @@ let real_data: Observation list =
 
 let InitBuilder () =
     let rand = Random()
-    
-    let randomTestValue () = 
-        Some(rand.NextDouble())
-    
+
+    let randomTestValue () = Some(rand.NextDouble())
+
     let randomTestClass () =
         match rand.Next(1, 5) with
         | 1 -> "Blue"
         | 2 -> "Green"
         | 3 -> "Purple"
         | _ -> "Gold"
-    
+
     let randomNewObservation dummy =
-        {
-            test_class = randomTestClass()
-            test_level = rand.Next(1, 51)
-            test_value = randomTestValue()
-        }
-    
-    let observations: seq<NewObservation> = Seq.init 10 randomNewObservation
+        { test_class = randomTestClass ()
+          test_level = rand.Next(1, 10)
+          test_value = randomTestValue () }
+
+    let observations: seq<NewObservation> = Seq.init 1000 randomNewObservation
 
     observations
 

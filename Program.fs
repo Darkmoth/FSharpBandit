@@ -76,7 +76,7 @@ let InitBuilder () =
 
     let randomNewObservation dummy =
         { test_class = randomTestClass ()
-          test_level = rand.Next(1, 10)
+          test_level = rand.Next(1, 11)
           test_N = 1
           test_value = randomTestValue () }
 
@@ -137,7 +137,7 @@ let rec PickNode data_tree =
     | Node (x) -> x
     | Branch (d, l, r) -> NodeEval l r
 
-let ObsCompact (observations: seq<NewObservation>) : seq<NewObservation> =
+let ObsCompact observations =
     observations
     |> Seq.groupBy (fun obs -> (obs.test_class, obs.test_level))
     |> Seq.map (fun ((testClass, testLevel), obsGroup) ->
@@ -156,6 +156,24 @@ let ObsCompact (observations: seq<NewObservation>) : seq<NewObservation> =
             test_value = Some avgValue 
         })
 
+let AddTheory (observations: seq<NewObservation>) =
+    let AddTestLevels class_value =
+        Seq.init 25 (fun i -> { test_class = class_value; test_level = i; test_N = 1; test_value = None })
+        
+    let classes = seq ["Blue"; "Gold"; "Red"]
+
+    let data_list = Seq.map AddTestLevels classes |> Seq.collect (fun seq -> seq)
+
+    let data_sequence =
+        query {
+            for data_val in data_list do
+                leftOuterJoin real_val in observations on (data_val.test_level = real_val.test_level) into result
+
+                for real_val in result do
+                    select (if (box real_val) = null then data_val else real_val)
+        }
+
+    data_sequence
 
 [<EntryPoint>]
 let main argv =
@@ -190,7 +208,7 @@ let main argv =
 
     let NextExperiment = PickNode data_tree
 *)
-    let init_seq = InitBuilder() |> ObsCompact |> Seq.toList
+    let init_seq = InitBuilder() |> ObsCompact |> AddTheory |> Seq.toList
 
     printfn "next: %A" init_seq
     // printfn "data: %A" data_tree

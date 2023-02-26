@@ -20,7 +20,7 @@ let optionDiv a b =
 type NewObservation =
     { test_class: string
       test_level: int
-      test_N : int
+      test_N: int
       test_value: float option }
 
 type Observation =
@@ -141,7 +141,7 @@ let ObsCompact observations =
     observations
     |> Seq.groupBy (fun obs -> (obs.test_class, obs.test_level))
     |> Seq.map (fun ((testClass, testLevel), obsGroup) ->
-        
+
         let count = obsGroup |> Seq.length
 
         let avgValue =
@@ -149,20 +149,24 @@ let ObsCompact observations =
             |> Seq.choose (fun obs -> obs.test_value)
             |> Seq.average
 
-        { 
-            test_class = testClass
-            test_level = testLevel
-            test_N = count
-            test_value = Some avgValue 
-        })
+        { test_class = testClass
+          test_level = testLevel
+          test_N = count
+          test_value = Some avgValue })
 
 let AddTheory (observations: seq<NewObservation>) =
     let AddTestLevels class_value =
-        Seq.init 25 (fun i -> { test_class = class_value; test_level = i; test_N = 1; test_value = None })
-        
-    let classes = seq ["Blue"; "Gold"; "Red"]
+        Seq.init 25 (fun i ->
+            { test_class = class_value
+              test_level = i
+              test_N = 1
+              test_value = None })
 
-    let data_list = Seq.map AddTestLevels classes |> Seq.collect (fun seq -> seq)
+    let classes = seq [ "Blue"; "Gold"; "Red" ]
+
+    let data_list =
+        Seq.map AddTestLevels classes
+        |> Seq.collect (fun seq -> seq)
 
     let data_sequence =
         query {
@@ -170,45 +174,28 @@ let AddTheory (observations: seq<NewObservation>) =
                 leftOuterJoin real_val in observations on (data_val.test_level = real_val.test_level) into result
 
                 for real_val in result do
-                    select (if (box real_val) = null then data_val else real_val)
+                    select (
+                        if (box real_val) = null then
+                            data_val
+                        else
+                            real_val
+                    )
         }
 
     data_sequence
 
 [<EntryPoint>]
 let main argv =
-(*
-    let data_list = List.init 25 (fun i -> { test_level = i; test_value = None })
-
-    let clean_data = ObsCompact real_data
-
-    let query1 =
-        query {
-            for data_val in data_list do
-                leftOuterJoin real_val in real_data on (data_val.test_level = real_val.test_level) into result
-
-                for real_val in result do
-                    where (box real_val = null)
-                    select data_val
-        }
-
-    let query2 =
-        query {
-            for data_val in data_list do
-                leftOuterJoin real_val in real_data on (data_val.test_level = real_val.test_level) into result
-
-                for real_val in result do
-                    where (box real_val <> null)
-                    select real_val
-        }
-
-    let data_sequence = query2.Union(query1) |> Seq.toList
-
+    (*
     let data_tree = TreeBuilder data_sequence
 
     let NextExperiment = PickNode data_tree
 *)
-    let init_seq = InitBuilder() |> ObsCompact |> AddTheory |> Seq.toList
+    let init_seq =
+        InitBuilder()
+        |> ObsCompact
+        |> AddTheory
+        |> Seq.toList
 
     printfn "next: %A" init_seq
     // printfn "data: %A" data_tree

@@ -20,6 +20,7 @@ let optionDiv a b =
 type NewObservation =
     { test_class: string
       test_level: int
+      test_N : int
       test_value: float option }
 
 type Observation =
@@ -76,6 +77,7 @@ let InitBuilder () =
     let randomNewObservation dummy =
         { test_class = randomTestClass ()
           test_level = rand.Next(1, 10)
+          test_N = 1
           test_value = randomTestValue () }
 
     let observations: seq<NewObservation> = Seq.init 1000 randomNewObservation
@@ -148,6 +150,7 @@ let ObsCompact (observations: Observation list) =
 
         { test_level = testLevel
           test_value = average })
+            test_N = count
 
 
 [<EntryPoint>]

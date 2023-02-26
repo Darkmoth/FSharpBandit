@@ -137,24 +137,29 @@ let rec PickNode data_tree =
     | Node (x) -> x
     | Branch (d, l, r) -> NodeEval l r
 
-let ObsCompact (observations: Observation list) =
+let ObsCompact (observations: seq<NewObservation>) : seq<NewObservation> =
     observations
-    |> List.groupBy (fun o -> o.test_level)
-    |> List.map (fun (testLevel, obsList) ->
-        let values =
-            obsList
-            |> List.choose (fun o -> o.test_value)
-            |> List.map float
+    |> Seq.groupBy (fun obs -> (obs.test_class, obs.test_level))
+    |> Seq.map (fun ((testClass, testLevel), obsGroup) ->
+        
+        let count = obsGroup |> Seq.length
 
-        let average = values |> List.averageBy id |> Some
+        let avgValue =
+            obsGroup
+            |> Seq.choose (fun obs -> obs.test_value)
+            |> Seq.average
 
-        { test_level = testLevel
-          test_value = average })
+        { 
+            test_class = testClass
+            test_level = testLevel
             test_N = count
+            test_value = Some avgValue 
+        })
 
 
 [<EntryPoint>]
 let main argv =
+(*
     let data_list = List.init 25 (fun i -> { test_level = i; test_value = None })
 
     let clean_data = ObsCompact real_data
@@ -184,8 +189,8 @@ let main argv =
     let data_tree = TreeBuilder data_sequence
 
     let NextExperiment = PickNode data_tree
-
-    let init_seq = InitBuilder() |> Seq.toList
+*)
+    let init_seq = InitBuilder() |> ObsCompact |> Seq.toList
 
     printfn "next: %A" init_seq
     // printfn "data: %A" data_tree

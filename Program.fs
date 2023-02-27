@@ -50,6 +50,8 @@ type Tree =
             let cnt = l.N + r.N
             optionDiv reward_sum cnt
 
+let TestClasses = seq [ "Red"; "Green"; "Blue" ]
+
 let real_data: Observation list =
     [ { test_level = 1
         test_value = Some 1.0 }
@@ -68,11 +70,7 @@ let InitBuilder () =
     let randomTestValue () = Some(rand.NextDouble())
 
     let randomTestClass () =
-        match rand.Next(1, 5) with
-        | 1 -> "Blue"
-        | 2 -> "Green"
-        | 3 -> "Purple"
-        | _ -> "Gold"
+        Seq.item (rand.Next(Seq.length TestClasses)) TestClasses
 
     let randomNewObservation dummy =
         { test_class = randomTestClass ()
@@ -162,10 +160,8 @@ let AddTheory (observations: seq<NewObservation>) =
               test_N = 1
               test_value = None })
 
-    let classes = seq [ "Blue"; "Gold"; "Red" ]
-
     let data_list =
-        Seq.map AddTestLevels classes
+        Seq.map AddTestLevels TestClasses
         |> Seq.collect (fun seq -> seq)
 
     let data_sequence =

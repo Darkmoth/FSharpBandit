@@ -3,7 +3,7 @@
 open System
 
 type Observation =
-    { test_level: int
+    { _test_level: int
       test_N: int
       test_value: float option }
 
@@ -21,8 +21,8 @@ type GenericObservation =
 
     member this.test_level =
         match this with
-        | Observation x -> x.test_level
-        | ClassObservation x -> x.data.test_level
+        | Observation x -> x._test_level
+        | ClassObservation x -> x.data._test_level
 
     member this.test_value =
         match this with
@@ -41,6 +41,7 @@ type ObsList =
                 |> Seq.map (fun obs -> ClassObservation obs)
 
         genericObsSeq
+
     member this.fromGeneric data_list =
         match this with
         | ObservationList _ ->
@@ -67,7 +68,7 @@ let rand = Random()
 let randomTestValue () = Some(rand.NextDouble())
 
 let randomObservation dummy : Observation =
-    { test_level = rand.Next(1, 11)
+    { _test_level = rand.Next(1, 4)
       test_N = 1
       test_value = randomTestValue () }
 
@@ -126,22 +127,22 @@ let AddTheory (obsList: ObsList) =
     let data_list = obsList.toGeneric
 
     let GenDataBlock i =
-        { test_level = i
+        { _test_level = i
           test_N = 1
           test_value = None }
 
-    let real_list =
+    let theory_list =
         match obsList with
         | ObservationList _ ->
             seq {
-                for inner in [ 1..25 ] do
+                for inner in [ 1..10 ] do
                     yield GenDataBlock inner
             }
             |> Seq.map Observation
         | ClassObservationList _ ->
             seq {
                 for class_value in TestClasses do
-                    for inner in [ 1..25 ] do
+                    for inner in [ 1..10 ] do
                         yield
                             { test_class = class_value
                               data = GenDataBlock inner }
@@ -150,18 +151,18 @@ let AddTheory (obsList: ObsList) =
 
     let data_sequence =
         query {
-            for data_val in data_list do
-                leftOuterJoin real_val in real_list
+            for theory_val in theory_list do
+                leftOuterJoin real_val in data_list
                                               on
-                                              ((data_val.test_class, data_val.test_level) = (real_val.test_class,
-                                                                                             real_val.test_level))
+                                              ((theory_val.test_class, theory_val.test_level) = (real_val.test_class,
+                                                                                                 real_val.test_level))
                                               into
                                               result
 
                 for real_val in result do
                     select (
                         if (box real_val) = null then
-                            data_val
+                            theory_val
                         else
                             real_val
                     )

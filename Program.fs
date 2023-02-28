@@ -7,7 +7,7 @@ open Observations
 type TreeNode = { N: float; Reward: float option }
 
 type Tree =
-    | Node of data: Observation
+    | Node of data: GenericObservation
     | Branch of data: TreeNode * left: Tree * right: Tree
     member this.N =
         match this with
@@ -27,9 +27,9 @@ type Tree =
             let cnt = l.N + r.N
             optionDiv reward_sum (Some cnt)
 
-let rec TreeBuilder data_seq =
+let rec TreeBuilder obs_list =
     let splitObservations observations =
-        let sorted = List.sortBy (fun o -> o.test_level) observations
+        let sorted = List.sortBy (fun (o:GenericObservation) -> o.test_level) observations
         let count = List.length sorted
         let midpoint = count / 2
         let firstHalf = List.take midpoint sorted
@@ -37,11 +37,11 @@ let rec TreeBuilder data_seq =
         firstHalf, secondHalf
 
     let retval =
-        if Seq.length data_seq = 1 then
-            let obs = Node(Seq.head data_seq)
+        if List.length obs_list = 1 then
+            let obs = Node(List.head obs_list)
             obs
         else
-            let left, right = splitObservations data_seq
+            let left, right = splitObservations obs_list
 
             let left_tree: Tree = TreeBuilder left
             let right_tree: Tree = TreeBuilder right
@@ -83,13 +83,16 @@ let rec PickNode data_tree =
 [<EntryPoint>]
 let main argv =
     (*
-    let data_tree = TreeBuilder data_sequence
-
     let NextExperiment = PickNode data_tree
-*)
-    let init_seq = InitBuilder() |> ObsCompact |> AddTheory
+    *)
+    let data_sequence = InitBuilder() |> ObsCompact |> AddTheory
+
+    let data_list = data_sequence.toGeneric |> Seq.toList
+
+    let data_tree = TreeBuilder data_list
+
     //|> Seq.choose
 
-    printfn "next: %A" init_seq
+    printfn "next: %A" data_sequence
 
     0 // return an integer exit code

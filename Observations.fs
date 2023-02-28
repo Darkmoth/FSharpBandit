@@ -11,10 +11,6 @@ type ClassObservation =
     { test_class: string
       data: Observation }
 
-type ObsList =
-    | ObservationList of seq<Observation>
-    | ClassObservationList of seq<ClassObservation>
-
 type GenericObservation =
     | Observation of Observation
     | ClassObservation of ClassObservation
@@ -32,6 +28,37 @@ type GenericObservation =
         match this with
         | Observation x -> x.test_value
         | ClassObservation x -> x.data.test_value
+
+type ObsList =
+    | ObservationList of seq<Observation>
+    | ClassObservationList of seq<ClassObservation>
+    member this.toGeneric =
+        let genericObsSeq =
+            match this with
+            | ObservationList obsSeq -> obsSeq |> Seq.map (fun obs -> Observation obs)
+            | ClassObservationList obsSeq ->
+                obsSeq
+                |> Seq.map (fun obs -> ClassObservation obs)
+
+        genericObsSeq
+    member this.fromGeneric data_list =
+        match this with
+        | ObservationList _ ->
+            ObservationList(
+                data_list
+                |> Seq.map (fun obs ->
+                    match obs with
+                    | Observation x -> x
+                    | _ -> failwith "Invalid type")
+            )
+        | ClassObservationList _ ->
+            ClassObservationList(
+                data_list
+                |> Seq.map (fun obs ->
+                    match obs with
+                    | ClassObservation x -> x
+                    | _ -> failwith "Invalid type")
+            )
 
 let TestClasses = seq [ "Red"; "Green"; "Blue" ]
 
@@ -65,37 +92,8 @@ let InitBuilder () : ObsList =
 
     observations
 
-let ObsListToGeneric obsList =
-    let genericObsSeq =
-        match obsList with
-        | ObservationList obsSeq -> obsSeq |> Seq.map (fun obs -> Observation obs)
-        | ClassObservationList obsSeq ->
-            obsSeq
-            |> Seq.map (fun obs -> ClassObservation obs)
-
-    genericObsSeq
-
-let GenericToObsList obsList data_list =
-    match obsList with
-    | ObservationList _ ->
-        ObservationList(
-            data_list
-            |> Seq.map (fun obs ->
-                match obs with
-                | Observation x -> x
-                | _ -> failwith "Invalid type")
-        )
-    | ClassObservationList _ ->
-        ClassObservationList(
-            data_list
-            |> Seq.map (fun obs ->
-                match obs with
-                | ClassObservation x -> x
-                | _ -> failwith "Invalid type")
-        )
-
 let ObsCompact (obsList: ObsList) =
-    let genericObsSeq = ObsListToGeneric obsList
+    let genericObsSeq = obsList.toGeneric
 
     let processedObsSeq =
         genericObsSeq
@@ -122,10 +120,10 @@ let ObsCompact (obsList: ObsList) =
                                 test_N = count
                                 test_value = Some avgValue } })
 
-    GenericToObsList obsList processedObsSeq
+    obsList.fromGeneric processedObsSeq
 
 let AddTheory (obsList: ObsList) =
-    let data_list = ObsListToGeneric obsList
+    let data_list = obsList.toGeneric
 
     let GenDataBlock i =
         { test_level = i
@@ -169,4 +167,4 @@ let AddTheory (obsList: ObsList) =
                     )
         }
 
-    GenericToObsList obsList data_sequence
+    obsList.fromGeneric data_sequence

@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Observations.fs" />
+    <Compile Include="OptionMath.fs" />
+    <Compile Include="Resolver.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

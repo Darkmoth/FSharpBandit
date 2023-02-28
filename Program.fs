@@ -1,21 +1,10 @@
 ﻿open System.Data
 open System.Linq
 open System
+open OptionMath
 
 // Define a function to construct a message to print
 let from whom = sprintf "from %s" whom
-
-let optionAdd a b =
-    match a, b with
-    | Some x, Some y -> Some(x + y)
-    | Some x, _ -> Some(x)
-    | _, Some y -> Some(y)
-    | _ -> None
-
-let optionDiv a b =
-    match a with
-    | Some x -> Some(x / float b)
-    | _ -> None
 
 type NewObservation =
     { test_class: string
@@ -48,7 +37,7 @@ type Tree =
         | Branch (d, l, r) ->
             let reward_sum = optionAdd (l.Reward()) (r.Reward())
             let cnt = l.N + r.N
-            optionDiv reward_sum cnt
+            optionDiv reward_sum (Some cnt)
 
 let TestClasses = seq [ "Red"; "Green"; "Blue" ]
 

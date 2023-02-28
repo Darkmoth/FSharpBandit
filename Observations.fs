@@ -15,6 +15,24 @@ type ObsList =
     | ObservationList of seq<Observation>
     | ClassObservationList of seq<ClassObservation>
 
+type GenericObservation =
+    | Observation of Observation
+    | ClassObservation of ClassObservation
+    member this.test_class =
+        match this with
+        | Observation x -> None
+        | ClassObservation x -> Some x.test_class
+
+    member this.test_level =
+        match this with
+        | Observation x -> x.test_level
+        | ClassObservation x -> x.data.test_level
+
+    member this.test_value =
+        match this with
+        | Observation x -> x.test_value
+        | ClassObservation x -> x.data.test_value
+
 let TestClasses = seq [ "Red"; "Green"; "Blue" ]
 
 let rand = Random()
@@ -37,6 +55,8 @@ let InitBuilder () : ObsList =
     // pick the type of list
     let list_type = rand.Next(0, 2)
 
+    printfn "list_type: %A" list_type
+
     let observations: ObsList =
         if list_type = 0 then
             ObservationList(Seq.init 1000 randomObservation)
@@ -44,24 +64,6 @@ let InitBuilder () : ObsList =
             ClassObservationList(Seq.init 1000 randomClassObservation)
 
     observations
-
-type GenericObservation =
-    | Observation of Observation
-    | ClassObservation of ClassObservation
-    member this.test_class =
-        match this with
-        | Observation x -> None
-        | ClassObservation x -> Some x.test_class
-
-    member this.test_level =
-        match this with
-        | Observation x -> x.test_level
-        | ClassObservation x -> x.data.test_level
-
-    member this.test_value =
-        match this with
-        | Observation x -> x.test_value
-        | ClassObservation x -> x.data.test_value
 
 let ObsListToGeneric obsList =
     let genericObsSeq =

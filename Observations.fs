@@ -68,7 +68,7 @@ let rand = Random()
 let randomTestValue () = Some(rand.NextDouble())
 
 let randomObservation dummy : Observation =
-    { _test_level = rand.Next(1, 4)
+    { _test_level = rand.Next(1, 10)
       test_N = 1
       test_value = randomTestValue () }
 
@@ -102,28 +102,29 @@ let ObsCompact (obsList: ObsList) =
         |> Seq.map (fun ((testClass, testLevel), obsGroup) ->
             let count = Seq.length obsGroup
 
-            let avgValue =
+            let sumValue =
                 obsGroup
                 |> Seq.choose (fun obs -> obs.test_value)
-                |> Seq.average
+                |> Seq.sum
 
             match obsGroup |> Seq.head with
             | Observation x ->
                 Observation
                     { x with
                         test_N = count
-                        test_value = Some avgValue }
+                        test_value = Some sumValue }
             | ClassObservation x ->
                 ClassObservation
                     { x with
                         data =
                             { x.data with
                                 test_N = count
-                                test_value = Some avgValue } })
+                                test_value = Some sumValue } })
 
     obsList.fromGeneric processedObsSeq
 
 let AddTheory (obsList: ObsList) =
+    let inner_range = [ 1..20 ]
     let data_list = obsList.toGeneric
 
     let GenDataBlock i =
@@ -135,14 +136,14 @@ let AddTheory (obsList: ObsList) =
         match obsList with
         | ObservationList _ ->
             seq {
-                for inner in [ 1..10 ] do
+                for inner in inner_range do
                     yield GenDataBlock inner
             }
             |> Seq.map Observation
         | ClassObservationList _ ->
             seq {
                 for class_value in TestClasses do
-                    for inner in [ 1..10 ] do
+                    for inner in inner_range do
                         yield
                             { test_class = class_value
                               data = GenDataBlock inner }

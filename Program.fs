@@ -46,11 +46,11 @@ let rec TreeBuilder obs_list =
             let left_tree: Tree = TreeBuilder left
             let right_tree: Tree = TreeBuilder right
 
-            let left_node =
+            let tree_node =
                 { N = left_tree.N + right_tree.N
                   Reward = optionAdd (left_tree.Reward()) (right_tree.Reward()) }
 
-            Branch(left_node, TreeBuilder left, TreeBuilder right)
+            Branch(tree_node, TreeBuilder left, TreeBuilder right)
 
     retval
 
@@ -82,17 +82,14 @@ let rec PickNode data_tree =
 
 [<EntryPoint>]
 let main argv =
-    (*
-    let NextExperiment = PickNode data_tree
-    *)
     let data_sequence = InitBuilder() |> ObsCompact |> AddTheory
 
     let data_list = data_sequence.toGeneric |> Seq.toList
 
     let data_tree = TreeBuilder data_list
 
-    //|> Seq.choose
+    let NextExperiment = PickNode data_tree
 
-    printfn "next: %A" data_sequence
+    printfn "next: %A" NextExperiment
 
     0 // return an integer exit code

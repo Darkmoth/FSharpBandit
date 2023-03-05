@@ -2,6 +2,7 @@
 
 open OptionMath
 open Observations
+open System
 
 type TreeNode = { N: float; Reward: float option }
 
@@ -78,3 +79,45 @@ let BuildResolver (obs_list: ObsList) =
                   data = class_tree })
 
         ClassForest(grouped_obs_list)
+
+let rec PickNode data_tree =
+    let logFunc (t: Tree) total_N =
+        let log_stuff = 2.0 * log t.N
+        let sqrt_stuff = sqrt log_stuff / total_N
+        Some(sqrt_stuff)
+
+    let NodeEval (l: Tree) (r: Tree) =
+        if l.Reward() = None then
+            PickNode l
+        else if r.Reward() = None then
+            PickNode r
+        else
+            let total_N = float (l.N + r.N)
+            let l_score = optionAdd (logFunc l total_N) l.AvgReward
+            let r_score = optionAdd (logFunc r total_N) r.AvgReward
+
+            if l_score > r_score then
+                PickNode l
+            else
+                PickNode r
+
+    // evaluate missing data, then UCB
+    match data_tree with
+    | Node (x) -> x
+    | Branch (d, l, r) -> NodeEval l r
+
+let Resolve resolver_in =
+    match resolver_in with
+    | Tree x -> PickNode x
+    | ClassForest x ->
+        (let sortedObservations =
+            x
+            |> List.map (fun (o: ClassTree) ->
+                match o.data.Reward() with
+                | None -> (o, float Single.MinValue)
+                | Some v -> (o, -v))
+            |> List.sortBy snd
+            |> List.map fst
+
+         List.head sortedObservations
+         |> (fun x -> PickNode x.data))

@@ -83,8 +83,6 @@ let InitBuilder () : ObsList =
     // pick the type of list
     let list_type = rand.Next(0, 2)
 
-    printfn "list_type: %A" list_type
-
     let observations: ObsList =
         if list_type = 0 then
             ObservationList(Seq.init 1000 randomObservation)
